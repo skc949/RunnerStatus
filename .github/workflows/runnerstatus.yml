@@ -17,78 +17,19 @@ jobs:
       # -----------------------------
       # Step 1: Fetch ORG-level runners
       # -----------------------------
-      - name: Fetch organization runners
+
+      - name: Get org runners
         run: |
-          curl -s \
-            -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
+          curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
             https://api.github.com/orgs/Sk81345/actions/runners \
-            > org_runners.json
-
-          echo "Org runners:"
-          jq -r '.runners[] | "\(.name) - \(.status)"' org_runners.json
-
-      # -----------------------------
-      # Step 2: Fetch REPO-level runners
-      # -----------------------------
-      - name: Fetch repository runners
-        shell: bash
+            | jq '.runners // []'
+      - name: Get repos and their runners
         run: |
-          REPOS=("repo1" "repo2" "repo3")
-
-          echo "[]" > repo_runners_all.json
-
-          for repo in "${REPOS[@]}"; do
-            echo "Checking repo: $repo"
-
-            RESPONSE=$(curl -s \
-              -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
-              -H "Accept: application/vnd.github+json" \
-              https://api.github.com/repos/Sk81345/$repo/actions/runners)
-
-            echo "$RESPONSE" | jq -e '.runners' > /dev/null || continue
-            echo "$RESPONSE" | jq '.runners[]' >> repo_runners_all.json
+          REPOS=$(curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
+            https://api.github.com/orgs/Sk81345/repos | jq -r '.[].name')
+          for repo in $REPOS; do
+            echo "Checking $repo"
+            curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
+              https://api.github.com/repos/Sk81345/$repo/actions/runners \
+              | jq '.runners // []'
           done
-
-      # -----------------------------
-      # Step 3: (Optional) Debug Org Runners via PowerShell
-      # -----------------------------
-      - name: List Org Runners (PowerShell)
-        shell: pwsh
-        run: |
-          $token = "${{ secrets.ORG_RUNNER_TOKEN }}"
-          curl -i `
-            -H ("Authorization: Bearer " + $token) `
-            -H "Accept: application/vnd.github+json" `
-            https://api.github.com/orgs/Sk81345/actions/runners
-
-      # -----------------------------
-      # Step 4: Evaluate offline runners
-      # -----------------------------
-      - name: Evaluate runner status
-        id: evaluate
-        shell: bash
-        run: |
-          OFFLINE_ORG=$(jq '[.runners[] | select(.status=="offline")] | length' org_runners.json)
-          OFFLINE_REPO=$(jq '[select(.status=="offline")] | length' repo_runners_all.json)
-
-          TOTAL_OFFLINE=$((OFFLINE_ORG + OFFLINE_REPO))
-
-          echo "Offline org runners: $OFFLINE_ORG"
-          echo "Offline repo runners: $OFFLINE_REPO"
-          echo "Total offline runners: $TOTAL_OFFLINE"
-
-          echo "offline_count=$TOTAL_OFFLINE" >> $GITHUB_OUTPUT
-
-      # -----------------------------
-      # Step 5: Prepare summary
-      # -----------------------------
-      - name: Prepare offline runner summary
-        if: steps.evaluate.outputs.offline_count != '0'
-        shell: bash
-        run: |
-          echo "===== OFFLINE ORG RUNNERS ====="
-          jq -r '.runners[] | select(.status=="offline") | .name' org_runners.json
-
-          echo "===== OFFLINE REPO RUNNERS ====="
-          jq -r 'select(.status=="offline") | .name' repo_runners_all.json
