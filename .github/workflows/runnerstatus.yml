@@ -21,14 +21,14 @@ jobs:
       - name: Get org runners
         run: |
           curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
-            https://api.github.com/orgs/Sk81345/actions/runners \
+            https://api.github.com/orgs/skc949/actions/runners \
             | jq '.runners // []'
 
       
       - name: Get repos and their runners
         run: |
           REPOS=$(curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
-            https://api.github.com/orgs/Sk81345/repos | jq -r '.[].name')
+            https://api.github.com/orgs/skc949/repos | jq -r '.[].name')
           for repo in $REPOS; do
             echo "Checking $repo"
             curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
