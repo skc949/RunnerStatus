@@ -32,6 +32,6 @@ jobs:
           for repo in $REPOS; do
             echo "Checking $repo"
             curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
-              https://api.github.com/repos/Sk81345/$repo/actions/runners \
+              https://api.github.com/repos/skc949/$repo/actions/runners \
               | jq '.runners // []'
           done
