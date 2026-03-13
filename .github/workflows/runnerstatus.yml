@@ -23,7 +23,11 @@ jobs:
           curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
             https://api.github.com/orgs/skc949/actions/runners \
             | jq '.runners // []'
-       
+      - name: TEMP cmmand
+        run: |
+          curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
+             https://api.github.com/orgs/skc949/repos
+          
 
       - name: Get repos and their runners
         run: |
