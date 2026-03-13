@@ -24,8 +24,13 @@ jobs:
             https://api.github.com/orgs/skc949/actions/runners \
             | jq '.runners // []'
        
+
       - name: Get repos and their runners
         run: |
-                 curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
-                 https://api.github.com/orgs/skc949/repos
-                 done
+          REPOS=$(curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
+          https://api.github.com/orgs/skc949/repos | jq -r '.[].name')
+          for repo in $REPOS; do
+            echo "Checking $repo"
+            curl -s -H "Authorization: Bearer ${{ secrets.ORG_RUNNER_TOKEN }}" \
+            https://api.github.com/repos/skc949/$repo/actions/runners | jq '.runners // []'
+          done
