@@ -1,7 +1,7 @@
 name: GitHub Self-Hosted Runner Monitoring
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: 
 
 jobs:
   runner-monitor:
