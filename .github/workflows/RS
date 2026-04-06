@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main   # change if needed
+      - main
 
 jobs:
   build:
@@ -14,11 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Show runner info
-        run: |
-          echo "Running on self-hosted runner"
-          uname -a
+      - name: Print runner name
+        run: echo "Runner name is $RUNNER_NAME"
 
-      - name: Simple test step
-        run: |
-          echo "Hello from self-hosted Linux runner!"
+      - name: System info
+        run: uname -a
+
+      - name: Test step
+        run: echo "Running on SelfHostedLinuxRunner"
