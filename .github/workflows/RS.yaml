@@ -1,4 +1,4 @@
-name: Self Hosted Runner Demo
+name: Run on Specific Self Hosted Runner
 
 on:
   workflow_dispatch:
@@ -8,17 +8,16 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, SelfHostedLinuxRunner]
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Print runner name
-        run: echo "Runner name is $RUNNER_NAME"
+      - name: Confirm runner
+        run: |
+          echo "Running on: $RUNNER_NAME"
+          uname -a
 
-      - name: System info
-        run: uname -a
-
-      - name: Test step
-        run: echo "Running on SelfHostedLinuxRunner"
+      - name: Test
+        run: echo "This is running ONLY on SelfHostedLinuxRunner"
