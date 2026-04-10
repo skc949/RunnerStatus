@@ -2,8 +2,8 @@ name: GitHub Self-Hosted Runner Monitor
 
 on:
   workflow_dispatch:
-  schedule:
-  - cron: '0 */1 * * *' # every hour (UTC)
+ # schedule:
+#  - cron: '0 */1 * * *' # every hour (UTC)
 
 permissions:
   contents: read
