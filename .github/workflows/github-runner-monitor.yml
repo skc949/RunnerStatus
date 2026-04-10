@@ -1,0 +1,56 @@
+name: GitHub Self-Hosted Runner Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+  - cron: '0 */1 * * *' # every hour (UTC)
+
+permissions:
+  contents: read
+
+jobs:
+  runner-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Install GitHub CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gh
+
+    - name: Fetch runner status (CSV + HTML)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        OWNER="YOUR_ORG_OR_USER"
+        CSV="github_runners.csv"
+
+        echo "Repository,RunnerName,OS,Status,Busy" > $CSV
+        OFFLINE_COUNT=0
+
+        REPOS=$(gh repo list $OWNER --limit 100 --json nameWithOwner -q '.[].nameWithOwner')
+
+        for REPO in $REPOS; do
+          gh api "/repos/$REPO/actions/runners" \
+            | jq -r '.runners[]? |
+              "\($REPO),\(.name),\(.os),\(.status),\(.busy)"' >> $CSV
+        done
+
+    - name: Send email (Gmail – test)
+      if: always()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        secure: true
+        username: ${{ secrets.GMAIL_USERNAME }}
+        password: ${{ secrets.GMAIL_APP_PASSWORD }}
+        subject: GitHub Runner Status Report
+        to: shyam9270@gmail.com
+        from: GitHub Runner Monitor
+        body: |
+          Please find attached GitHub self-hosted runner status report.
+        attachments: github_runners.csv
