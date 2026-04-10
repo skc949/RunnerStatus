@@ -25,7 +25,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        OWNER="YOUR_ORG_OR_USER"
+        OWNER="skc949"
         CSV="github_runners.csv"
 
         echo "Repository,RunnerName,OS,Status,Busy" > $CSV
