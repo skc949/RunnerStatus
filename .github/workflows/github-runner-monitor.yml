@@ -9,10 +9,13 @@ permissions:
   contents: read
 
 
+
 jobs:
   runner-check:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, test]
 
+    steps:
+      - run: echo "Running on TEST runner only"
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
