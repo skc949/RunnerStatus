@@ -2,59 +2,65 @@ name: GitHub Self-Hosted Runner Monitor
 
 on:
   workflow_dispatch:
- # schedule:
-#  - cron: '0 */1 * * *' # every hour (UTC)
+  # schedule:
+  #   - cron: '0 */1 * * *'
 
 permissions:
   contents: read
-
-
 
 jobs:
   runner-check:
     runs-on: [self-hosted, test]
 
     steps:
-      - run: echo "Running on TEST runner only"
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Install GitHub CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gh
+      - name: Install dependencies (gh + jq)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh jq
 
-    - name: Fetch runner status (CSV + HTML)
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        OWNER="skc949"
-        CSV="github_runners.csv"
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
 
-        echo "Repository,RunnerName,OS,Status,Busy" > $CSV
-        OFFLINE_COUNT=0
+      - name: Fetch runner status (CSV)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="skc949"
+          CSV="github_runners.csv"
 
-        REPOS=$(gh repo list $OWNER --limit 100 --json nameWithOwner -q '.[].nameWithOwner')
+          echo "Repository,RunnerName,OS,Status,Busy" > $CSV
 
-        for REPO in $REPOS; do
-          gh api "/repos/$REPO/actions/runners" \
-            | jq -r '.runners[]? |
-              "\($REPO),\(.name),\(.os),\(.status),\(.busy)"' >> $CSV
-        done
+          # Get repositories
+          REPOS=$(gh repo list $OWNER --limit 100 --json nameWithOwner --jq '.[].nameWithOwner')
 
-    - name: Send email (Gmail – test)
-      if: always()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        secure: true
-        username: ${{ secrets.GMAIL_USERNAME }}
-        password: ${{ secrets.GMAIL_APP_PASSWORD }}
-        subject: GitHub Runner Status Report
-        to: shyam9270@gmail.com
-        from: GitHub Runner Monitor
-        body: |
-          Please find attached GitHub self-hosted runner status report.
-        attachments: github_runners.csv
+          for REPO in $REPOS; do
+            echo "Checking $REPO"
+
+            RESPONSE=$(gh api -H "Accept: application/vnd.github+json" "/repos/$REPO/actions/runners")
+
+            echo "$RESPONSE" | jq -r '
+              .runners[]? |
+              "\("'"$REPO"'"),\(.name),\(.os),\(.status),\(.busy)"' >> $CSV
+          done
+
+      - name: Send email (Gmail)
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: GitHub Runner Status Report
+          to: shyam9270@gmail.com
+          from: GitHub Runner Monitor
+          body: |
+            Please find attached GitHub self-hosted runner status report.
+          attachments: github_runners.csv
