@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   runner-check:
-    runs-on: [self-hosted, test]
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
       - name: Checkout repo
