@@ -24,7 +24,7 @@ jobs:
 
       - name: Fetch runner status (CSV)
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ORG_RUNNER_TOKEN }}
         run: |
           OWNER="skc949"
           CSV="github_runners.csv"
